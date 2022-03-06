@@ -246,7 +246,7 @@
     $accountType = 1..100|get-random 
     if($accountType -le 3){ # X percent chance of being a service account
     #service
-    $nameSuffix = "SA"
+    $nameSuffix = "-SA"
     $description = 'Service account'
     #removing do while loop and making random number range longer, sorry if the account is there already
     # this is so that I can attempt to import multithreading on user creation
@@ -257,10 +257,12 @@
         $surname = ""  
         
     }else{
-        $surname = get-content("$($scriptpath)\Names\familynames-usa-top1000.txt")|get-random
+        $surname_upper = get-content("$($scriptpath)\Names\familynames-usa-top1000.txt")|get-random
+        $surname = (Get-Culture).TextInfo.ToTitleCase($surname_upper.ToLower())
         # Write-Host $surname
     $genderpreference = 0,1|get-random
-    if ($genderpreference -eq 0){$givenname = get-content("$($scriptpath)\Names\femalenames-usa-top1000.txt")|get-random}else{$givenname = get-content($scriptpath + '\Names\malenames-usa-top1000.txt')|get-random}
+    if ($genderpreference -eq 0){$givenname_upper = get-content("$($scriptpath)\Names\femalenames-usa-top1000.txt")|get-random}else{$givenname_upper = get-content($scriptpath + '\Names\malenames-usa-top1000.txt')|get-random}
+    $givenname = (Get-Culture).TextInfo.ToTitleCase($givenname_upper.ToLower())
     $name = $givenname.SubString(0,1) + "." + $surname
     $displayname = $givenname + " " + $surname
     }
@@ -289,36 +291,33 @@
         $exists = Get-ADUSer $name -ErrorAction Stop
     } catch{}
 
-    if($exists){
-        return $true
-    }
+    if(-Not $exists){
+        new-aduser -server $setdc  -Description $Description -DisplayName $displayname -name $name -SamAccountName $givenname -Surname $surname -Enabled $true -Path $ouLocation -AccountPassword (ConvertTo-SecureString ($pwd) -AsPlainText -force)
+        
+        $pwd = ''
 
-    new-aduser -server $setdc  -Description $Description -DisplayName $displayname -name $name -SamAccountName $givenname -Surname $surname -Enabled $true -Path $ouLocation -AccountPassword (ConvertTo-SecureString ($pwd) -AsPlainText -force)
-    
-    $pwd = ''
-
-    #==============================
-    # Set Does Not Require Pre-Auth for ASREP
-    #==============================
-    
-    $setASREP = 1..1000|get-random
-    if($setASREP -lt 20){
-	Get-ADuser $name | Set-ADAccountControl -DoesNotRequirePreAuth:$true
-    }
-    
-    #===============================
-    #SET ATTRIBUTES - no additional attributes set at this time besides UPN
-    #Todo: Set SPN for kerberoasting.  Example attribute edit is in createcomputers.ps1
-    #===============================
-    
-    $upn = $name + '@' + $dnsroot
-    try{Set-ADUser -Identity $name -UserPrincipalName "$upn" }
-    catch{}
-    
-    # return $false
-    ################################
-    #End Create User Objects
-    ################################
-    
+        #==============================
+        # Set Does Not Require Pre-Auth for ASREP
+        #==============================
+        
+        $setASREP = 1..1000|get-random
+        if($setASREP -lt 20){
+        Get-ADuser $name | Set-ADAccountControl -DoesNotRequirePreAuth:$true
+        }
+        
+        #===============================
+        #SET ATTRIBUTES - no additional attributes set at this time besides UPN
+        #Todo: Set SPN for kerberoasting.  Example attribute edit is in createcomputers.ps1
+        #===============================
+        
+        $upn = $name + '@' + $dnsroot
+        try{Set-ADUser -Identity $name -UserPrincipalName "$upn" }
+        catch{}
+        
+        # return $false
+        ################################
+        #End Create User Objects
+        ################################
+        }
     }
     

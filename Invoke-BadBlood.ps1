@@ -24,12 +24,12 @@ param
 (
    [Parameter(Mandatory = $false,
       Position = 1,
-      HelpMessage = 'Supply a count for user creation, default 1000')]
-   [Int32]$UserCount = 1000,
+      HelpMessage = 'Supply a count for user creation, default 500')]
+   [Int32]$UserCount = 500,
    [Parameter(Mandatory = $false,
       Position = 2,
-      HelpMessage = 'Supply a count for group creation, default 250')]
-   [int32]$GroupCount = 250,
+      HelpMessage = 'Supply a count for group creation, default 100')]
+   [int32]$GroupCount = 100,
    [Parameter(Mandatory = $false,
       Position = 3,
       HelpMessage = 'Supply a count for computer creation, default 50')]
